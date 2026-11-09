@@ -1,0 +1,29 @@
+{
+  "name": "kooki",
+  "version": "0.10.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.js",
+    "supabase:login": "supabase login",
+    "supabase:link": "supabase link",
+    "db:push": "supabase db push",
+    "db:diff": "supabase db diff",
+    "functions:deploy": "supabase functions deploy push-subscription && supabase functions deploy push-dispatch --no-verify-jwt"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.15",
+    "typescript": "^5.7.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "lucide-react": "^0.468.0",
+    "@supabase/supabase-js": "^2.49.0"
+  },
+  "devDependencies": {
+    "supabase": "^2.0.0"
+  }
+}

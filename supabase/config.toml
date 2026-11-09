@@ -1,0 +1,7 @@
+project_id = "kooki"
+
+[functions.push-dispatch]
+verify_jwt = false
+
+[functions.push-subscription]
+verify_jwt = true
