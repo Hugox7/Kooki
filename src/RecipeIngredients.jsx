@@ -1,0 +1,21 @@
+import React,{useMemo,useState} from 'react';
+import {normalize,pantry,recipes as baseRecipes} from './data.js';
+import {parseIngredient,unitFamily,quantityInBase} from './inventory.js';
+
+const COMMON=['Tomates','Tomates cerises','Tomates concassées','Tomates pelées','Pommes de terre','Carottes','Courgettes','Oignons','Ail','Poireaux','Concombres','Salade','Champignons','Épinards','Brocoli','Poivrons','Aubergines','Avocats','Pommes','Bananes','Citrons','Fraises','Œufs','Lait','Beurre','Crème fraîche','Yaourt nature','Fromage râpé','Emmental','Mozzarella','Parmesan','Jambon','Lardons','Poulet','Bœuf haché','Saumon','Thon','Riz','Pâtes','Farine','Sucre','Sel','Poivre','Huile d’olive','Pain','Pain de mie','Pâte brisée','Maïs','Lentilles','Pois chiches','Haricots rouges','Basilic','Persil','Ciboulette'];
+const UNITS=['pièce(s)','g','kg','ml','cl','L','paquet(s)','boîte(s)'];
+const stockText=(items,name,unit)=>{const matches=items.filter(i=>normalize(i.name)===normalize(name)&&Number(i.quantity)>0);if(!matches.length)return 'Absent du stock';const same=matches.filter(i=>unitFamily(i.unit)&&unitFamily(i.unit)===unitFamily(unit));if(same.length){const total=same.reduce((sum,i)=>sum+(quantityInBase(i.quantity,i.unit)||0),0);const base=unitFamily(unit)==='mass'?'g':unitFamily(unit)==='volume'?'ml':'pièce(s)';return `${total} ${base} en stock`;}return 'En stock (autre unité)';};
+export default function RecipeIngredients({items,recipes,value,onChange}){
+ const [draft,setDraft]=useState('');const [quantity,setQuantity]=useState('1');const [unit,setUnit]=useState('pièce(s)');
+ const catalog=useMemo(()=>{const map=new Map();const add=(name,source)=>{const key=normalize(name);if(key&&!map.has(key))map.set(key,{name,source});};items.forEach(i=>add(i.name,'stock'));recipes.forEach(r=>(r.ingredients||[]).forEach(x=>add(parseIngredient(x).name,'recette')));baseRecipes.forEach(r=>(r.ingredients||[]).forEach(x=>add(parseIngredient(x).name,'recette')));pantry.forEach(n=>add(n,'catalogue'));COMMON.forEach(n=>add(n,'catalogue'));return [...map.values()];},[items,recipes]);
+ const suggestions=draft.trim()?catalog.filter(x=>normalize(x.name).includes(normalize(draft))).sort((a,b)=>(a.source==='stock'?-1:0)-(b.source==='stock'?-1:0)).slice(0,7):[];
+ const exact=catalog.find(x=>normalize(x.name)===normalize(draft));
+ const add=(name=draft)=>{name=String(name).trim();if(!name||!Number.isFinite(Number(quantity))||Number(quantity)<=0)return;onChange([...value,{name,quantity:Number(quantity),unit}]);setDraft('');setQuantity('1');};
+ return <div className="recipeingredients"><strong>Ingrédients</strong><p className="hint">Choisis un aliment de ton stock ou du catalogue, ou saisis-en un nouveau. Précise la quantité pour permettre le calcul des courses et du stock.</p>
+ {value.map((i,index)=><div className="recipeingredientrow" key={index}><span className="grow"><strong>{i.name}</strong><small>{i.quantity} {i.unit} · {stockText(items,i.name,i.unit)}</small></span><button type="button" className="tiny red" onClick={()=>onChange(value.filter((_,j)=>j!==index))} aria-label={'Retirer '+i.name}>Retirer</button></div>)}
+ <div className="ingredientpicker"><label>Rechercher un aliment<input value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Ex. tomates, farine…" autoComplete="off"/></label>
+ {draft.trim()&&<div className="ingredientsuggestions">{suggestions.map(s=><button type="button" key={normalize(s.name)} onClick={()=>{setDraft(s.name);const match=items.find(i=>normalize(i.name)===normalize(s.name));if(match&&UNITS.includes(match.unit))setUnit(match.unit);}}><span>{s.name}</span><small>{s.source==='stock'?'Dans ma cuisine':s.source==='recette'?'Déjà utilisé':'Catalogue'}</small></button>)}{!exact&&<div className="hint">Nouvel aliment : « {draft.trim()} »</div>}</div>}
+ <div className="formgrid"><label>Quantité<input type="number" min="0.01" step="any" value={quantity} onChange={e=>setQuantity(e.target.value)}/></label><label>Unité<select value={unit} onChange={e=>setUnit(e.target.value)}>{UNITS.map(x=><option key={x}>{x}</option>)}</select></label></div>
+ {draft.trim()&&<p className="hint">{stockText(items,draft,unit)}</p>}
+ <button type="button" className="secondary full" disabled={!draft.trim()||Number(quantity)<=0} onClick={()=>add()}>+ Ajouter cet ingrédient</button></div></div>;
+}
