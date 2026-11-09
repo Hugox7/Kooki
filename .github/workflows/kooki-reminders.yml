@@ -1,0 +1,42 @@
+name: Kooki — rappels quotidiens
+
+on:
+  schedule:
+    # 08:00 Europe/Paris = 06:00 UTC en été, 07:00 UTC en hiver.
+    - cron: '0 6,7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Vérifier l'heure de Paris
+        id: paris
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = 'workflow_dispatch' ] || [ "$(TZ=Europe/Paris date +%H)" = '08' ]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Déclencher les notifications Kooki
+        if: steps.paris.outputs.run == 'true'
+        env:
+          KOOKI_SUPABASE_URL: ${{ secrets.KOOKI_SUPABASE_URL }}
+          KOOKI_CRON_SECRET: ${{ secrets.KOOKI_CRON_SECRET }}
+        run: |
+          test -n "$KOOKI_SUPABASE_URL" || { echo 'Secret KOOKI_SUPABASE_URL manquant'; exit 1; }
+          test -n "$KOOKI_CRON_SECRET" || { echo 'Secret KOOKI_CRON_SECRET manquant'; exit 1; }
+          curl --fail-with-body --show-error --silent \
+            --retry 2 --retry-delay 5 \
+            --max-time 120 \
+            -X POST "${KOOKI_SUPABASE_URL%/}/functions/v1/push-dispatch" \
+            -H 'Content-Type: application/json' \
+            -H "x-cron-secret: $KOOKI_CRON_SECRET" \
+            -d '{}'
