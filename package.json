@@ -1,6 +1,6 @@
 {
   "name": "kooki",
-  "version": "0.10.0",
+  "version": "0.14.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,7 @@
     "supabase:link": "supabase link",
     "db:push": "supabase db push",
     "db:diff": "supabase db diff",
-    "functions:deploy": "supabase functions deploy push-subscription && supabase functions deploy push-dispatch --no-verify-jwt"
+    "functions:deploy": "supabase functions deploy push-subscription && supabase functions deploy push-dispatch --no-verify-jwt && supabase functions deploy send-household-invite"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",

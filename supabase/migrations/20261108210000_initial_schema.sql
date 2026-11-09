@@ -1,9 +1,9 @@
 -- Exécuter dans Supabase SQL Editor. Ne jamais exposer la clé service_role côté client.
-create extension if not exists pgcrypto with schema extensions;
+create extension if not exists pgcrypto;
 create table if not exists public.households (
  id uuid primary key default gen_random_uuid(),
  name text not null check(length(name) between 1 and 100),
- invite_code text not null unique default upper(encode(extensions.gen_random_bytes(8), 'hex')),
+ invite_code text not null unique default upper(encode(gen_random_bytes(8),'hex')),
  created_at timestamptz not null default now()
 );
 create table if not exists public.household_members (

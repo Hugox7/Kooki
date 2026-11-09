@@ -110,3 +110,37 @@ npm run functions:deploy
 La migration initiale se trouve dans `supabase/migrations/20261108210000_initial_schema.sql`. Si le schéma SQL a déjà été exécuté manuellement sur ce projet, ne poussez pas cette migration sans vérifier son historique : risque de conflit.
 
 Pour les push, configurez également les secrets VAPID, le secret de cron et la planification décrits en section V0.5. Les commandes Supabase n'ont pas été exécutées contre un projet réel.
+
+
+## V0.11 — Invitations temporaires
+
+La migration `20261109151659_rotate_household_invite_codes.sql` ajoute l'expiration des codes après 24 h et la RPC `get_household_invite_code`. Elle doit être appliquée avec `npm run db:push` sur les installations qui ne l'ont pas encore reçue. Sur le projet de test où elle a déjà été appliquée, elle ne doit pas être rejouée manuellement. Les paramètres du foyer affichent le code, son expiration et permettent de le renouveler après confirmation.
+
+**Note de déploiement :** la migration incluse est une reproduction du SQL fourni précédemment. Vérifier son identité avec la migration déjà appliquée avant d'exécuter `db:push` sur une base existante.
+
+## V0.12 — Profils du foyer
+
+- Appliquer la nouvelle migration `20261109170000_household_profiles.sql` avec `npm run db:push`.
+- Dans Paramètres, consulter les membres connectés, modifier son pseudo/rôle familial, créer des profils sans compte (propriétaire), et retirer un membre ou un profil (propriétaire).
+- Les rôles familiaux sont purement visuels et ne modifient pas les permissions.
+- Les profils sans compte ne disposent pas d'identifiants de connexion.
+- **Important** : l'interface ne permet pas encore de transférer la propriété ou de quitter volontairement un foyer.
+- Test manuel sur Supabase réel encore nécessaire, notamment pour les permissions SQL et l'actualisation entre deux appareils.
+
+
+## V0.13 — membres et invitations par e-mail
+
+- Un membre du foyer correspond toujours à un compte Supabase Auth. Le bouton « Ajouter un profil familial » a été retiré.
+- Chaque membre peut modifier son pseudo et son rôle familial. Le propriétaire peut retirer les autres membres.
+- Les anciennes données de profils sans compte sont conservées en base mais ne sont plus affichées ni modifiables.
+- L'interface propose l'envoi facultatif d'une invitation par e-mail, en plus de la copie du code. **L'envoi n'est pas opérationnel avant configuration de Resend et déploiement de la nouvelle Edge Function.**
+
+### Pour activer les invitations par e-mail plus tard
+
+1. `npm run db:push` pour appliquer la migration V0.13.
+2. Vérifier un domaine expéditeur dans Resend, puis définir les secrets serveur :
+   `npx supabase secrets set RESEND_API_KEY=... KOOKI_EMAIL_FROM="Kooki <invitation@votredomaine.fr>"`
+3. `npx supabase functions deploy send-household-invite`
+4. Tester avec un compte connecté membre du foyer. La fonction limite à cinq tentatives par foyer et par heure, mais cette limite n'est pas atomique en cas d'appels simultanés.
+
+Ne jamais mettre `RESEND_API_KEY` ni la clé `service_role` dans `.env.local`.
