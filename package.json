@@ -15,15 +15,16 @@
     "functions:deploy": "supabase functions deploy push-subscription && supabase functions deploy push-dispatch --no-verify-jwt && supabase functions deploy send-household-invite"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^5.4.15",
-    "typescript": "^5.7.3",
+    "@supabase/supabase-js": "^2.49.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "lucide-react": "^0.468.0",
-    "@supabase/supabase-js": "^2.49.0"
+    "typescript": "^5.7.3",
+    "vite": "^8.3.8"
   },
   "devDependencies": {
     "supabase": "^2.0.0"
-  }
+  },
+  "overrides": {}
 }
